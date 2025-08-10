@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Join as Driver</title>
+<style>
+  body { 
+    font-family: Arial, sans-serif; 
+    padding: 20px; 
+    background: #f8f9fa;
+  }
+  form { 
+    max-width: 400px; 
+    margin: auto; 
+    background: white; 
+    padding: 20px; 
+    border-radius: 10px; 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+  label { 
+    display: block; 
+    margin-top: 10px; 
+    font-weight: bold; 
+    font-size: 14px; 
+  }
+  input, textarea { 
+    width: 100%; 
+    padding: 10px; 
+    margin-top: 5px; 
+    box-sizing: border-box; 
+    border: 1px solid #ccc; 
+    border-radius: 5px;
+    font-size: 14px;
+  }
+  button { 
+    width: 100%; 
+    padding: 12px; 
+    margin-top: 15px; 
+    background: linear-gradient(to bottom, #28a745, #218838);
+    color: white; 
+    font-size: 16px; 
+    font-weight: bold;
+    border: none; 
+    border-radius: 8px; 
+    cursor: pointer;
+    box-shadow: 0 5px #1e7e34;
+    transition: all 0.2s ease;
+  }
+  button:hover { 
+    background: linear-gradient(to bottom, #218838, #1e7e34);
+  }
+  button:active {
+    box-shadow: 0 2px #1e7e34;
+    transform: translateY(3px);
+  }
+</style>
+</head>
+<body>
+
+<h2 style="text-align:center;">Join as Driver</h2>
+<form id="driverForm">
+  <label>Full Name</label>
+  <input type="text" name="fullName" required>
+
+  <label>Ambulance No</label>
+  <input type="text" name="ambulanceNo" required>
+
+  <label>Driving License No</label>
+  <input type="text" name="licenseNo" required>
+
+  <label>Phone Number</label>
+  <input type="tel" name="phone" required>
+
+  <label>Aadhar Front</label>
+  <input type="file" name="aadharFront" accept="image/*" required>
+
+  <label>Aadhar Back</label>
+  <input type="file" name="aadharBack" accept="image/*" required>
+
+  <label>PAN Card</label>
+  <input type="file" name="panCard" accept="image/*" required>
+
+  <label>Selfie</label>
+  <input type="file" name="selfie" accept="image/*" required>
+
+  <label>RC Book</label>
+  <input type="file" name="rcBook" accept="image/*" required>
+
+  <label>Insurance Document</label>
+  <input type="file" name="insurance" accept="image/*" required>
+
+  <label>Full Address</label>
+  <textarea name="address" rows="3" required></textarea>
+
+  <button type="submit">🚑 Submit</button>
+</form>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+  import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
+
+  // Firebase Config
+  const firebaseConfig = {
+    apiKey: "AIzaSyCFgRQxK_W2T9S5QWZnxAd-kYV52Kzyb94",
+    authDomain: "zara-life-care.firebaseapp.com",
+    projectId: "zara-life-care",
+    storageBucket: "zara-life-care.appspot.com",
+    messagingSenderId: "307306937129",
+    appId: "1:307306937129:web:a949207fe64fe87dd3d538"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+  const storage = getStorage(app);
+
+  let currentUserUID = null;
+
+  // 🔒 Login Check
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+    } else {
+      currentUserUID = user.uid;
+    }
+  });
+
+  const form = document.getElementById('driverForm');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!currentUserUID) {
+      alert("Please login first!");
+      return;
+    }
+
+    const formData = new FormData(form);
+    const driverId = currentUserUID; // यूज़र का UID driver ID होगा
+
+    // Upload all files & get URLs
+    const uploadFile = async (file, name) => {
+      const fileRef = sRef(storage, `drivers/${driverId}/${name}`);
+      await uploadBytes(fileRef, file);
+      return await getDownloadURL(fileRef);
+    };
+
+    const aadharFrontURL = await uploadFile(formData.get('aadharFront'), 'aadharFront.jpg');
+    const aadharBackURL = await uploadFile(formData.get('aadharBack'), 'aadharBack.jpg');
+    const panCardURL = await uploadFile(formData.get('panCard'), 'panCard.jpg');
+    const selfieURL = await uploadFile(formData.get('selfie'), 'selfie.jpg');
+    const rcBookURL = await uploadFile(formData.get('rcBook'), 'rcBook.jpg');
+    const insuranceURL = await uploadFile(formData.get('insurance'), 'insurance.jpg');
+
+    // Save to database
+    await set(ref(db, 'drivers/' + driverId), {
+      name: formData.get('fullName'),
+      ambulanceNo: formData.get('ambulanceNo'),
+      licenseNo: formData.get('licenseNo'),
+      phone: formData.get('phone'),
+      address: formData.get('address'),
+      status: "pending",
+      wallet: 0,
+      aadharFront: aadharFrontURL,
+      aadharBack: aadharBackURL,
+      panCard: panCardURL,
+      selfie: selfieURL,
+      rcBook: rcBookURL,
+      insurance: insuranceURL
+    });
+
+    alert("Driver application submitted successfully!");
+    form.reset();
+  });
+</script>
+
+</body>
+</html>

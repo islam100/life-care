@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Zara Life Care</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container card" style="max-width:400px;">
+    <h2>🚑 Zara Life Care</h2>
+    <p style="text-align:center;">Login with your Google Account</p>
+    <div style="text-align:center; margin-top:20px;">
+      <button id="googleLoginBtn">Sign in with Google</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } 
+      from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+
+    // तुम्हारा Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCFgRQxK_W2T9S5QWZnxAd-kYV52Kzyb94",
+      authDomain: "zara-life-care.firebaseapp.com",
+      projectId: "zara-life-care",
+      storageBucket: "zara-life-care.appspot.com",
+      messagingSenderId: "307306937129",
+      appId: "1:307306937129:web:a949207fe64fe87dd3d538"
+    };
+
+    // Init
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    // अगर already login है तो redirect
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        window.location.href = "index.html"; // Login के बाद home page
+      }
+    });
+
+    // Google login button
+    document.getElementById("googleLoginBtn").addEventListener("click", () => {
+      signInWithPopup(auth, provider)
+        .then(result => {
+          console.log("Login success:", result.user);
+          window.location.href = "index.html";
+        })
+        .catch(error => {
+          console.error("Login error:", error);
+          alert("Login Failed: " + error.message);
+        });
+    });
+  </script>
+
+</body>
+</html>
